@@ -4,20 +4,15 @@ body {
     background-color: #f0f2f5;
 }
 
-#root {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 24px;
-}
-
 .app {
     width: 100%;
-    max-width: 1200px;
+    max-width: 500px; /* Lebar khas ponsel */
+    height: 100vh;
+    margin: 0 auto;
     background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 header {
@@ -25,98 +20,157 @@ header {
     color: white;
     padding: 16px;
     text-align: center;
-    border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
 }
 
+.page-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Memungkinkan konten halaman untuk digulir */
+    padding: 16px;
+}
+
+/* Tata Letak Halaman POS */
 .main-content {
     display: flex;
-    padding: 24px;
+    flex-direction: column;
+    height: 100%;
 }
-
 .product-list {
-    flex: 2;
-    padding-right: 24px;
+    flex: 1;
 }
-
 .products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 16px;
 }
-
 .product-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 16px;
     cursor: pointer;
-    transition: box-shadow 0.2s;
+    text-align: center;
 }
-
-.product-card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.product-card h3 {
-    margin: 0 0 8px;
-}
-
 .cart {
-    flex: 1;
-    border-left: 1px solid #ddd;
-    padding-left: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
 }
-
-.cart ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.cart li {
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
+.cart-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 8px 0;
 }
-
 .quantity-controls {
     display: flex;
     align-items: center;
 }
-
 .quantity-controls button {
+    width: 28px;
+    height: 28px;
+}
+
+/* Tata Letak Manajemen Produk */
+.product-management {
+    padding: 0;
+}
+.product-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.product-form input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.product-form button {
+    padding: 10px;
     background-color: #00ACC2;
     color: white;
     border: none;
-    width: 24px;
-    height: 24px;
     border-radius: 4px;
-    cursor: pointer;
-    margin: 0 8px;
+}
+.product-management-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
 }
 
-.quantity-controls span {
-    min-width: 20px;
-    text-align: center;
+/* Halaman Pengaturan */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
-
-.total {
-    margin-top: 16px;
+.settings-form label {
+    display: flex;
+    flex-direction: column;
     font-weight: bold;
 }
-
-.clear-button {
-    background-color: #ff4d4f;
-    color: white;
-    border: none;
-    padding: 10px 16px;
+.settings-form input {
+    margin-top: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
     border-radius: 4px;
-    cursor: pointer;
-    margin-top: 16px;
-    width: 100%;
 }
 
-.clear-button:hover {
-    background-color: #ff7875;
+/* Halaman Riwayat */
+.history-list {
+    list-style: none;
+    padding: 0;
+}
+.history-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 8px;
+}
+.history-item-products {
+    list-style: none;
+    padding-left: 16px;
+    margin-bottom: 8px;
+}
+.history-item-total {
+    text-align: right;
+}
+
+
+/* Navigasi Bawah */
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+    background-color: white;
+    flex-shrink: 0;
+}
+.nav-button {
+    background: none;
+    border: none;
+    color: #333;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.7;
+}
+.nav-button.active {
+    color: #00ACC2;
+    opacity: 1;
+}
+
+/* Gaya Cetak (Tetap sama) */
+#receipt-container { display: none; }
+@media print {
+    #app-container { display: none; }
+    #receipt-container { display: block; }
+    /* Gaya struk lainnya tetap di sini */
 }
