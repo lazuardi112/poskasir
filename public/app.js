@@ -7,7 +7,7 @@ const SearchIcon = () => (
 );
 
 // Komponen Halaman POS (Point of Sale)
-const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calculateTotal, handlePrint }) => {
+const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calculateTotal, completeTransaction }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const filteredProducts = products.filter(p =>
@@ -46,7 +46,7 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
           <button className="clear-button" onClick={clearCart}>
               Kosongkan
           </button>
-          <button className="pay-button" onClick={handlePrint} disabled={cart.length === 0}>
+          <button className="pay-button" onClick={completeTransaction} disabled={cart.length === 0}>
               Bayar
           </button>
         </div>
@@ -59,7 +59,6 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
 const ProductsPage = ({ products, productForm, isEditing, handleProductFormChange, handleProductSubmit, handleEditProduct, handleDeleteProduct, cancelEdit, onScanClick }) => {
     return (
         <section className="product-management">
-
             <form onSubmit={handleProductSubmit} className="product-form">
                 <h3>{isEditing ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
                 <input type="text" name="name" placeholder="Nama Produk" value={productForm.name} onChange={handleProductFormChange} required />
@@ -127,27 +126,18 @@ const HistoryPage = ({ history }) => {
 // Komponen Halaman Pindai EAN
 const ScanPage = ({ onScanSuccess, onCancel }) => {
     const scannerRef = React.useRef(null);
-
     React.useEffect(() => {
-        if (!scannerRef.current) {
-            scannerRef.current = new Html5Qrcode("reader");
-        }
-        const html5QrCode = scannerRef.current;
-
+        const html5QrCode = new Html5Qrcode("reader");
+        scannerRef.current = html5QrCode;
         html5QrCode.start(
             { facingMode: "environment" },
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 150 }
-            },
-            (decodedText, decodedResult) => {
-                onScanSuccess(decodedText);
-            },
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            onScanSuccess,
             (errorMessage) => { /* abaikan */ }
         ).catch(err => console.error("Gagal memulai pemindai", err));
 
         return () => {
-            html5QrCode.stop().catch(err => console.error("Gagal menghentikan pemindai.", err));
+            scannerRef.current.stop().catch(err => console.error("Gagal menghentikan pemindai.", err));
         };
     }, [onScanSuccess]);
 
@@ -172,27 +162,47 @@ const SettingsPage = ({ settings, setSettings }) => {
             <form className="settings-form">
                 <label>
                     Nama Toko:
-                    <input
-                        type="text"
-                        name="storeName"
-                        value={settings.storeName}
-                        onChange={handleSettingsChange}
-                    />
+                    <input type="text" name="storeName" value={settings.storeName} onChange={handleSettingsChange} />
                 </label>
                 <label>
                     Slogan Struk:
-                    <input
-                        type="text"
-                        name="receiptSlogan"
-                        value={settings.receiptSlogan}
-                        onChange={handleSettingsChange}
-                    />
+                    <input type="text" name="receiptSlogan" value={settings.receiptSlogan} onChange={handleSettingsChange} />
                 </label>
             </form>
         </div>
     );
 };
 
+// Komponen Halaman Struk
+const ReceiptPage = ({ transaction, settings, onBack, onPrint }) => {
+    return (
+        <div className="receipt-page">
+            <h2>Transaksi Berhasil</h2>
+            <div className="receipt-details">
+                <div className="receipt-header">
+                    <h3>{settings.storeName}</h3>
+                    <p>{new Date(transaction.id).toLocaleString()}</p>
+                </div>
+                <ul className="receipt-items">
+                    {transaction.cart.map(item => (
+                        <li key={item.id}>
+                            <span>{item.name} (x{item.quantity})</span>
+                            <span>Rp {(item.price * item.quantity).toLocaleString()}</span>
+                        </li>
+                    ))}
+                </ul>
+                <div className="receipt-total">
+                    <strong>Total:</strong>
+                    <strong>Rp {transaction.total.toLocaleString()}</strong>
+                </div>
+            </div>
+            <div className="receipt-actions">
+                <button className="back-button" onClick={onBack}>Kembali</button>
+                <button className="print-button" onClick={onPrint}>Print Struk</button>
+            </div>
+        </div>
+    );
+};
 
 // Komponen Navigasi Bawah
 const BottomNav = ({ activePage, setActivePage, startScan }) => {
@@ -203,10 +213,7 @@ const BottomNav = ({ activePage, setActivePage, startScan }) => {
     { name: 'Riwayat', icon: 'riwayat', action: () => setActivePage('riwayat') },
     { name: 'Pengaturan', icon: 'pengaturan', action: () => setActivePage('pengaturan') },
   ];
-
-  // Komponen ikon SVG generik
   const Icon = ({ name }) => {
-    // Ikon gaya Feather Icons
     const icons = {
         pos: "<path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/>",
         produk: "<path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/><polyline points='3.27 6.96 12 12.01 20.73 6.96'/><line x1='12' y1='22.08' x2='12' y2='12'/>",
@@ -218,7 +225,6 @@ const BottomNav = ({ activePage, setActivePage, startScan }) => {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: icons[name] }} />
     );
   };
-
   return (
     <nav className="bottom-nav">
       {navItems.map(item => (
@@ -236,44 +242,32 @@ function App() {
   const [activePage, setActivePage] = React.useState('pos');
   const [cart, setCart] = React.useState(() => JSON.parse(localStorage.getItem('posCart') || '[]'));
   const [products, setProducts] = React.useState(() => JSON.parse(localStorage.getItem('posProducts') || JSON.stringify([
-    { id: 1, name: 'Kopi Hitam', price: 15000, ean: '1111' },
-    { id: 2, name: 'Cappuccino', price: 25000, ean: '2222' },
-    { id: 3, name: 'Latte', price: 20000, ean: '3333' },
-    { id: 4, name: 'Espresso', price: 12000, ean: '4444' },
+    { id: 1, name: 'Kopi Hitam', price: 15000, ean: '1111' }, { id: 2, name: 'Cappuccino', price: 25000, ean: '2222' },
+    { id: 3, name: 'Latte', price: 20000, ean: '3333' }, { id: 4, name: 'Espresso', price: 12000, ean: '4444' },
   ])));
-
   const [productForm, setProductForm] = React.useState({ id: null, name: '', price: '', ean: '' });
   const [isEditing, setIsEditing] = React.useState(false);
   const [settings, setSettings] = React.useState(() => JSON.parse(localStorage.getItem('posSettings') || JSON.stringify({
-      storeName: 'Modern POS',
-      receiptSlogan: 'Terima kasih telah berkunjung!'
+      storeName: 'Modern POS', receiptSlogan: 'Terima kasih telah berkunjung!'
   })));
   const [history, setHistory] = React.useState(() => JSON.parse(localStorage.getItem('posHistory') || '[]'));
   const [isScanning, setIsScanning] = React.useState(false);
   const [scanCallback, setScanCallback] = React.useState(null);
+  const [currentTransaction, setCurrentTransaction] = React.useState(null);
 
   React.useEffect(() => { localStorage.setItem('posCart', JSON.stringify(cart)); }, [cart]);
   React.useEffect(() => { localStorage.setItem('posProducts', JSON.stringify(products)); }, [products]);
   React.useEffect(() => { localStorage.setItem('posSettings', JSON.stringify(settings)); }, [settings]);
   React.useEffect(() => { localStorage.setItem('posHistory', JSON.stringify(history)); }, [history]);
 
-  // Semua fungsi helper
-  const handleScanForForm = (ean) => {
-    setProductForm(prev => ({...prev, ean: ean}));
-    setIsScanning(false);
-  };
-
+  // Fungsi-fungsi helper
+  const handleScanForForm = (ean) => { setProductForm(prev => ({...prev, ean: ean})); setIsScanning(false); };
   const addToCartByEan = (ean) => {
     const product = products.find(p => p.ean === ean);
-    if (product) {
-        addToCart(product);
-        setActivePage('pos'); // Kembali ke halaman POS setelah berhasil memindai
-    } else {
-        alert('Produk dengan kode EAN ini tidak ditemukan.');
-    }
-    setIsScanning(false); // Selalu tutup pemindai
+    if (product) { addToCart(product); setActivePage('pos'); }
+    else { alert('Produk dengan kode EAN ini tidak ditemukan.'); }
+    setIsScanning(false);
   };
-
   const addToCart = (product) => {
     setCart(prev => {
       const exist = prev.find(item => item.id === product.id);
@@ -290,16 +284,17 @@ function App() {
   };
   const clearCart = () => setCart([]);
   const calculateTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const handlePrint = () => {
-      const newTransaction = {
-          id: Date.now(),
-          cart: [...cart],
-          total: calculateTotal()
-      };
+
+  const completeTransaction = () => {
+      const newTransaction = { id: Date.now(), cart: [...cart], total: calculateTotal() };
       setHistory([newTransaction, ...history]);
-      window.print();
+      setCurrentTransaction(newTransaction);
       setCart([]);
   };
+
+  const handlePrintReceipt = () => window.print();
+  const handleBackToPos = () => setCurrentTransaction(null);
+
   const handleProductFormChange = (e) => setProductForm({ ...productForm, [e.target.name]: e.target.value });
   const handleProductSubmit = (e) => {
     e.preventDefault();
@@ -315,33 +310,30 @@ function App() {
   const handleEditProduct = (product) => { setProductForm(product); setIsEditing(true); setActivePage('produk'); };
   const handleDeleteProduct = (id) => setProducts(products.filter(p => p.id !== id));
   const cancelEdit = () => { setIsEditing(false); setProductForm({ id: null, name: '', price: '', ean: '' }); };
-
   const startScan = () => {
-      // Tentukan callback berdasarkan halaman aktif
       const callback = activePage === 'produk' ? handleScanForForm : addToCartByEan;
       setScanCallback(() => callback);
       setIsScanning(true);
   };
-
   const onScanSuccess = (decodedText) => {
-      if (scanCallback) {
-          scanCallback(decodedText);
-      }
+      if (scanCallback) scanCallback(decodedText);
       setIsScanning(false);
   };
 
-
   const renderPage = () => {
+    if (currentTransaction) {
+        return <ReceiptPage transaction={currentTransaction} settings={settings} onBack={handleBackToPos} onPrint={handlePrintReceipt} />;
+    }
     switch (activePage) {
-      case 'pos':
-        return <PosPage products={products} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} clearCart={clearCart} calculateTotal={calculateTotal} handlePrint={handlePrint} />;
-      case 'produk':
-        return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} onScanClick={startScan} />;
+      case 'pos': return <PosPage products={products} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} clearCart={clearCart} calculateTotal={calculateTotal} completeTransaction={completeTransaction} />;
+      case 'produk': return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} onScanClick={startScan} />;
       case 'riwayat': return <HistoryPage history={history} />;
       case 'pengaturan': return <SettingsPage settings={settings} setSettings={setSettings} />;
       default: return <PosPage />;
     }
   };
+
+  const receiptData = currentTransaction || { cart: cart, total: calculateTotal() };
 
   return (
     <div>
@@ -352,16 +344,16 @@ function App() {
               <div className="page-content">
                 {renderPage()}
               </div>
-              <BottomNav activePage={activePage} setActivePage={setActivePage} startScan={startScan} />
+              {!currentTransaction && <BottomNav activePage={activePage} setActivePage={setActivePage} startScan={startScan} />}
             </div>
         </div>
         <div id="receipt-container">
             <h2>{settings.storeName}</h2>
             <table>
                 <thead> <tr> <th>Produk</th> <th>Jumlah</th> <th>Harga</th> <th>Subtotal</th> </tr> </thead>
-                <tbody>{cart.map(item => (<tr key={item.id}><td>{item.name}</td><td>{item.quantity}</td><td>Rp {item.price.toLocaleString()}</td><td>Rp {(item.price * item.quantity).toLocaleString()}</td></tr>))}</tbody>
+                <tbody>{receiptData.cart.map(item => (<tr key={item.id}><td>{item.name}</td><td>{item.quantity}</td><td>Rp {item.price.toLocaleString()}</td><td>Rp {(item.price * item.quantity).toLocaleString()}</td></tr>))}</tbody>
             </table>
-            <hr /><div className="receipt-total"><h3>Total: Rp {calculateTotal().toLocaleString()}</h3></div>
+            <hr /><div className="receipt-total"><h3>Total: Rp {receiptData.total.toLocaleString()}</h3></div>
             <p className="thank-you-note">{settings.receiptSlogan}</p>
         </div>
     </div>

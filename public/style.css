@@ -430,6 +430,91 @@ header h1 {
     cursor: pointer;
 }
 
+/* --- Halaman Struk --- */
+.receipt-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+.receipt-page h2 {
+  color: var(--success-color);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.receipt-details {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 2rem;
+}
+.receipt-header {
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+.receipt-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.receipt-header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-color);
+  font-size: 0.8rem;
+}
+.receipt-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.receipt-items li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.receipt-items li:last-child {
+  border-bottom: none;
+}
+.receipt-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--text-color);
+}
+.receipt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 380px;
+}
+.back-button, .print-button {
+  padding: 0.8rem;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+.back-button {
+  background-color: var(--surface-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+.print-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+
 /* --- Struk untuk Cetak --- */
 #receipt-container { display: none; }
 
