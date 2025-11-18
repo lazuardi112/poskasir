@@ -1,3 +1,11 @@
+// Komponen Ikon Pencarian
+const SearchIcon = () => (
+    <svg className="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+);
+
 // Komponen Halaman POS (Point of Sale)
 const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calculateTotal, handlePrint }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -10,7 +18,7 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
     <main className="main-content">
       <div className="product-list">
         <div className="product-list-header">
-            <h2>Produk</h2>
+            <SearchIcon />
             <input
                 type="text"
                 placeholder="Cari produk..."
@@ -30,16 +38,16 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
       </div>
       <div className="cart">
         <h2>Keranjang</h2>
-        {cart.length === 0 ? ( <p>Keranjang kosong</p> ) : ( <ul> {cart.map((item) => ( <li key={item.id} className="cart-item"> <span>{item.name}</span> <div className="quantity-controls"> <button onClick={() => removeFromCart(item)}>-</button> <span>{item.quantity}</span> <button onClick={() => addToCart(item)}>+</button> </div> <span>Rp {(item.price * item.quantity).toLocaleString()}</span> </li> ))} </ul> )}
+        {cart.length === 0 ? ( <p>Keranjang kosong</p> ) : ( <ul> {cart.map((item) => ( <li key={item.id} className="cart-item"> <div className="item-details"> <span>{item.name}</span> <small>Rp {item.price.toLocaleString()}</small> </div> <div className="quantity-controls"> <button onClick={() => removeFromCart(item)}>-</button> <span>{item.quantity}</span> <button onClick={() => addToCart(item)}>+</button> </div> <strong>Rp {(item.price * item.quantity).toLocaleString()}</strong> </li> ))} </ul> )}
         <div className="total">
           <h3>Total: Rp {calculateTotal().toLocaleString()}</h3>
         </div>
         <div className="cart-buttons">
           <button className="clear-button" onClick={clearCart}>
-              Kosongkan Keranjang
+              Kosongkan
           </button>
           <button className="pay-button" onClick={handlePrint} disabled={cart.length === 0}>
-              Bayar & Cetak
+              Bayar
           </button>
         </div>
       </div>
@@ -51,8 +59,9 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
 const ProductsPage = ({ products, productForm, isEditing, handleProductFormChange, handleProductSubmit, handleEditProduct, handleDeleteProduct, cancelEdit, onScanClick }) => {
     return (
         <section className="product-management">
-            <h2>Manajemen Produk</h2>
+
             <form onSubmit={handleProductSubmit} className="product-form">
+                <h3>{isEditing ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
                 <input type="text" name="name" placeholder="Nama Produk" value={productForm.name} onChange={handleProductFormChange} required />
                 <input type="number" name="price" placeholder="Harga" value={productForm.price} onChange={handleProductFormChange} required />
                 <div className="ean-input-group">
@@ -62,10 +71,14 @@ const ProductsPage = ({ products, productForm, isEditing, handleProductFormChang
                 <button type="submit">{isEditing ? 'Perbarui Produk' : 'Tambah Produk'}</button>
                 {isEditing && <button type="button" onClick={cancelEdit}>Batal</button>}
             </form>
+            <h2>Daftar Produk</h2>
             <ul className="product-management-list">
                 {products.map(p => (
                     <li key={p.id}>
-                        <span>{p.name} - Rp {p.price.toLocaleString()} <br/> <small>EAN: {p.ean || 'N/A'}</small></span>
+                        <div className="product-info">
+                           <span>{p.name} - Rp {p.price.toLocaleString()}</span>
+                           <small>EAN: {p.ean || 'N/A'}</small>
+                        </div>
                         <div>
                             <button onClick={() => handleEditProduct(p)}>Edit</button>
                             <button onClick={() => handleDeleteProduct(p.id)}>Hapus</button>
@@ -94,7 +107,10 @@ const HistoryPage = ({ history }) => {
                             </div>
                             <ul className="history-item-products">
                                 {tx.cart.map(item => (
-                                    <li key={item.id}>{item.name} x {item.quantity}</li>
+                                    <li key={item.id}>
+                                        <span>{item.name} x {item.quantity}</span>
+                                        <span>Rp {(item.price * item.quantity).toLocaleString()}</span>
+                                    </li>
                                 ))}
                             </ul>
                             <div className="history-item-total">
@@ -137,9 +153,7 @@ const ScanPage = ({ onScanSuccess, onCancel }) => {
 
     return (
         <div className="scan-overlay">
-            <div className="scan-viewfinder">
-                <div id="reader"></div>
-            </div>
+            <div id="reader"></div>
             <button className="cancel-scan-button" onClick={onCancel}>Batal</button>
         </div>
     );
@@ -154,7 +168,7 @@ const SettingsPage = ({ settings, setSettings }) => {
 
     return (
         <div className="settings-page">
-            <h2>Pengaturan Toko</h2>
+            <h2>Pengaturan</h2>
             <form className="settings-form">
                 <label>
                     Nama Toko:
@@ -179,32 +193,29 @@ const SettingsPage = ({ settings, setSettings }) => {
     );
 };
 
-// Komponen Placeholder untuk halaman masa depan
-const PlaceholderPage = ({ title }) => <div><h2>{title}</h2><p>Fitur ini akan segera hadir.</p></div>;
 
 // Komponen Navigasi Bawah
-const BottomNav = ({ activePage, setActivePage, startScan, addToCartByEan }) => {
+const BottomNav = ({ activePage, setActivePage, startScan }) => {
   const navItems = [
     { name: 'POS', icon: 'pos', action: () => setActivePage('pos') },
     { name: 'Produk', icon: 'produk', action: () => setActivePage('produk') },
-    { name: 'Pindai', icon: 'pindai', action: () => startScan(addToCartByEan) },
+    { name: 'Pindai', icon: 'pindai', action: () => startScan() },
     { name: 'Riwayat', icon: 'riwayat', action: () => setActivePage('riwayat') },
     { name: 'Pengaturan', icon: 'pengaturan', action: () => setActivePage('pengaturan') },
   ];
 
   // Komponen ikon SVG generik
   const Icon = ({ name }) => {
+    // Ikon gaya Feather Icons
     const icons = {
-        pos: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
-        produk: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
-        riwayat: "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z",
-        pengaturan: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6",
-        pindai: "M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10",
+        pos: "<path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/>",
+        produk: "<path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/><polyline points='3.27 6.96 12 12.01 20.73 6.96'/><line x1='12' y1='22.08' x2='12' y2='12'/>",
+        riwayat: "<polyline points='22 12 18 12 15 21 9 3 6 12 2 12'/>",
+        pengaturan: "<circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/>",
+        pindai: "<path d='M3 7V5a2 2 0 0 1 2-2h2'/><path d='M17 3h2a2 2 0 0 1 2 2v2'/><path d='M21 17v2a2 2 0 0 1-2 2h-2'/><path d='M7 21H5a2 2 0 0 1-2-2v-2'/><line x1='7' y1='12' x2='17' y2='12'/>",
     };
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d={icons[name]} />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: icons[name] }} />
     );
   };
 
@@ -227,12 +238,14 @@ function App() {
   const [products, setProducts] = React.useState(() => JSON.parse(localStorage.getItem('posProducts') || JSON.stringify([
     { id: 1, name: 'Kopi Hitam', price: 15000, ean: '1111' },
     { id: 2, name: 'Cappuccino', price: 25000, ean: '2222' },
+    { id: 3, name: 'Latte', price: 20000, ean: '3333' },
+    { id: 4, name: 'Espresso', price: 12000, ean: '4444' },
   ])));
 
   const [productForm, setProductForm] = React.useState({ id: null, name: '', price: '', ean: '' });
   const [isEditing, setIsEditing] = React.useState(false);
   const [settings, setSettings] = React.useState(() => JSON.parse(localStorage.getItem('posSettings') || JSON.stringify({
-      storeName: 'Toko Kopi Saya',
+      storeName: 'Modern POS',
       receiptSlogan: 'Terima kasih telah berkunjung!'
   })));
   const [history, setHistory] = React.useState(() => JSON.parse(localStorage.getItem('posHistory') || '[]'));
@@ -244,7 +257,7 @@ function App() {
   React.useEffect(() => { localStorage.setItem('posSettings', JSON.stringify(settings)); }, [settings]);
   React.useEffect(() => { localStorage.setItem('posHistory', JSON.stringify(history)); }, [history]);
 
-  // Semua fungsi helper (addToCart, removeFromCart, dll.)
+  // Semua fungsi helper
   const handleScanForForm = (ean) => {
     setProductForm(prev => ({...prev, ean: ean}));
     setIsScanning(false);
@@ -258,6 +271,7 @@ function App() {
     } else {
         alert('Produk dengan kode EAN ini tidak ditemukan.');
     }
+    setIsScanning(false); // Selalu tutup pemindai
   };
 
   const addToCart = (product) => {
@@ -298,11 +312,13 @@ function App() {
     setIsEditing(false);
     setProductForm({ id: null, name: '', price: '', ean: '' });
   };
-  const handleEditProduct = (product) => { setProductForm(product); setIsEditing(true); };
+  const handleEditProduct = (product) => { setProductForm(product); setIsEditing(true); setActivePage('produk'); };
   const handleDeleteProduct = (id) => setProducts(products.filter(p => p.id !== id));
   const cancelEdit = () => { setIsEditing(false); setProductForm({ id: null, name: '', price: '', ean: '' }); };
 
-  const startScan = (callback) => {
+  const startScan = () => {
+      // Tentukan callback berdasarkan halaman aktif
+      const callback = activePage === 'produk' ? handleScanForForm : addToCartByEan;
       setScanCallback(() => callback);
       setIsScanning(true);
   };
@@ -314,12 +330,13 @@ function App() {
       setIsScanning(false);
   };
 
+
   const renderPage = () => {
     switch (activePage) {
       case 'pos':
         return <PosPage products={products} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} clearCart={clearCart} calculateTotal={calculateTotal} handlePrint={handlePrint} />;
       case 'produk':
-        return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} onScanClick={() => startScan(handleScanForForm)} />;
+        return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} onScanClick={startScan} />;
       case 'riwayat': return <HistoryPage history={history} />;
       case 'pengaturan': return <SettingsPage settings={settings} setSettings={setSettings} />;
       default: return <PosPage />;
@@ -335,7 +352,7 @@ function App() {
               <div className="page-content">
                 {renderPage()}
               </div>
-              <BottomNav activePage={activePage} setActivePage={setActivePage} startScan={() => startScan(addToCartByEan)} />
+              <BottomNav activePage={activePage} setActivePage={setActivePage} startScan={startScan} />
             </div>
         </div>
         <div id="receipt-container">
