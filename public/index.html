@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi POS</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+    <title>Modern POS</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <svg width="0" height="0" style="position:absolute">
+        <defs>
+            <linearGradient id="icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#7A5CFF;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#5639AC;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
     <div id="root"></div>
-    <script type="text/babel" src="/src/App.js"></script>
-    <script type="text/babel" src="/src/index.js"></script>
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" src="app.js"></script>
 </body>
 </html>

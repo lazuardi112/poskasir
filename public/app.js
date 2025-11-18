@@ -1,11 +1,26 @@
 // Komponen Halaman POS (Point of Sale)
 const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calculateTotal, handlePrint }) => {
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <main className="main-content">
       <div className="product-list">
-        <h2>Produk</h2>
+        <div className="product-list-header">
+            <h2>Produk</h2>
+            <input
+                type="text"
+                placeholder="Cari produk..."
+                className="search-bar"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
         <div className="products">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <div key={product.id} className="product-card" onClick={() => addToCart(product)}>
               <h3>{product.name}</h3>
               <p>Rp {product.price.toLocaleString()}</p>
@@ -33,14 +48,17 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
 };
 
 // Komponen Halaman Manajemen Produk
-const ProductsPage = ({ products, productForm, isEditing, handleProductFormChange, handleProductSubmit, handleEditProduct, handleDeleteProduct, cancelEdit }) => {
+const ProductsPage = ({ products, productForm, isEditing, handleProductFormChange, handleProductSubmit, handleEditProduct, handleDeleteProduct, cancelEdit, onScanClick }) => {
     return (
         <section className="product-management">
             <h2>Manajemen Produk</h2>
             <form onSubmit={handleProductSubmit} className="product-form">
                 <input type="text" name="name" placeholder="Nama Produk" value={productForm.name} onChange={handleProductFormChange} required />
                 <input type="number" name="price" placeholder="Harga" value={productForm.price} onChange={handleProductFormChange} required />
-                <input type="text" name="ean" placeholder="Kode EAN (Barcode)" value={productForm.ean} onChange={handleProductFormChange} />
+                <div className="ean-input-group">
+                    <input type="text" name="ean" placeholder="Kode EAN (Barcode)" value={productForm.ean} onChange={handleProductFormChange} />
+                    <button type="button" onClick={onScanClick}>Pindai</button>
+                </div>
                 <button type="submit">{isEditing ? 'Perbarui Produk' : 'Tambah Produk'}</button>
                 {isEditing && <button type="button" onClick={cancelEdit}>Batal</button>}
             </form>
@@ -91,54 +109,38 @@ const HistoryPage = ({ history }) => {
 }
 
 // Komponen Halaman Pindai EAN
-const ScanPage = ({ onScanSuccess }) => {
+const ScanPage = ({ onScanSuccess, onCancel }) => {
+    const scannerRef = React.useRef(null);
+
     React.useEffect(() => {
-        const html5QrCode = new Html5Qrcode("reader");
-        let scannerIsRunning = false;
+        if (!scannerRef.current) {
+            scannerRef.current = new Html5Qrcode("reader");
+        }
+        const html5QrCode = scannerRef.current;
 
-        const startScanner = () => {
-            if (scannerIsRunning) return;
-            scannerIsRunning = true;
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: 250
-                },
-                (decodedText, decodedResult) => {
-                    onScanSuccess(decodedText);
-                    stopScanner(); // Hentikan setelah pindai berhasil
-                },
-                (errorMessage) => {
-                    // Abaikan kesalahan, teruskan pemindaian
-                }
-            ).catch((err) => {
-                console.error("Gagal memulai pemindai", err);
-                scannerIsRunning = false;
-            });
-        };
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 150 }
+            },
+            (decodedText, decodedResult) => {
+                onScanSuccess(decodedText);
+            },
+            (errorMessage) => { /* abaikan */ }
+        ).catch(err => console.error("Gagal memulai pemindai", err));
 
-        const stopScanner = () => {
-            if (!scannerIsRunning) return;
-            html5QrCode.stop().then(() => {
-                scannerIsRunning = false;
-            }).catch(err => {
-                console.error("Gagal menghentikan pemindai", err);
-            });
-        };
-
-        startScanner();
-
-        // Cleanup function untuk menghentikan pemindai saat komponen di-unmount
         return () => {
-            stopScanner();
+            html5QrCode.stop().catch(err => console.error("Gagal menghentikan pemindai.", err));
         };
     }, [onScanSuccess]);
 
     return (
-        <div className="scan-page">
-            <h2>Pindai Kode EAN</h2>
-            <div id="reader" style={{ width: '100%' }}></div>
+        <div className="scan-overlay">
+            <div className="scan-viewfinder">
+                <div id="reader"></div>
+            </div>
+            <button className="cancel-scan-button" onClick={onCancel}>Batal</button>
         </div>
     );
 };
@@ -181,16 +183,37 @@ const SettingsPage = ({ settings, setSettings }) => {
 const PlaceholderPage = ({ title }) => <div><h2>{title}</h2><p>Fitur ini akan segera hadir.</p></div>;
 
 // Komponen Navigasi Bawah
-const BottomNav = ({ activePage, setActivePage }) => {
-  const navItems = ['POS', 'Produk', 'Riwayat', 'Pindai', 'Pengaturan'];
+const BottomNav = ({ activePage, setActivePage, startScan, addToCartByEan }) => {
+  const navItems = [
+    { name: 'POS', icon: 'pos', action: () => setActivePage('pos') },
+    { name: 'Produk', icon: 'produk', action: () => setActivePage('produk') },
+    { name: 'Pindai', icon: 'pindai', action: () => startScan(addToCartByEan) },
+    { name: 'Riwayat', icon: 'riwayat', action: () => setActivePage('riwayat') },
+    { name: 'Pengaturan', icon: 'pengaturan', action: () => setActivePage('pengaturan') },
+  ];
+
+  // Komponen ikon SVG generik
+  const Icon = ({ name }) => {
+    const icons = {
+        pos: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+        produk: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
+        riwayat: "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z",
+        pengaturan: "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6",
+        pindai: "M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10",
+    };
+    return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d={icons[name]} />
+        </svg>
+    );
+  };
+
   return (
     <nav className="bottom-nav">
       {navItems.map(item => (
-        <button
-          key={item}
-          className={`nav-button ${activePage === item.toLowerCase() ? 'active' : ''}`}
-          onClick={() => setActivePage(item.toLowerCase())}>
-          {item}
+        <button key={item.name} className={`nav-button ${activePage === item.name.toLowerCase() ? 'active' : ''}`} onClick={item.action}>
+          <Icon name={item.icon} />
+          <span>{item.name}</span>
         </button>
       ))}
     </nav>
@@ -213,6 +236,8 @@ function App() {
       receiptSlogan: 'Terima kasih telah berkunjung!'
   })));
   const [history, setHistory] = React.useState(() => JSON.parse(localStorage.getItem('posHistory') || '[]'));
+  const [isScanning, setIsScanning] = React.useState(false);
+  const [scanCallback, setScanCallback] = React.useState(null);
 
   React.useEffect(() => { localStorage.setItem('posCart', JSON.stringify(cart)); }, [cart]);
   React.useEffect(() => { localStorage.setItem('posProducts', JSON.stringify(products)); }, [products]);
@@ -220,6 +245,11 @@ function App() {
   React.useEffect(() => { localStorage.setItem('posHistory', JSON.stringify(history)); }, [history]);
 
   // Semua fungsi helper (addToCart, removeFromCart, dll.)
+  const handleScanForForm = (ean) => {
+    setProductForm(prev => ({...prev, ean: ean}));
+    setIsScanning(false);
+  };
+
   const addToCartByEan = (ean) => {
     const product = products.find(p => p.ean === ean);
     if (product) {
@@ -272,14 +302,25 @@ function App() {
   const handleDeleteProduct = (id) => setProducts(products.filter(p => p.id !== id));
   const cancelEdit = () => { setIsEditing(false); setProductForm({ id: null, name: '', price: '', ean: '' }); };
 
+  const startScan = (callback) => {
+      setScanCallback(() => callback);
+      setIsScanning(true);
+  };
+
+  const onScanSuccess = (decodedText) => {
+      if (scanCallback) {
+          scanCallback(decodedText);
+      }
+      setIsScanning(false);
+  };
+
   const renderPage = () => {
     switch (activePage) {
       case 'pos':
         return <PosPage products={products} cart={cart} addToCart={addToCart} removeFromCart={removeFromCart} clearCart={clearCart} calculateTotal={calculateTotal} handlePrint={handlePrint} />;
       case 'produk':
-        return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} />;
+        return <ProductsPage products={products} productForm={productForm} isEditing={isEditing} handleProductFormChange={handleProductFormChange} handleProductSubmit={handleProductSubmit} handleEditProduct={handleEditProduct} handleDeleteProduct={handleDeleteProduct} cancelEdit={cancelEdit} onScanClick={() => startScan(handleScanForForm)} />;
       case 'riwayat': return <HistoryPage history={history} />;
-      case 'pindai': return <ScanPage onScanSuccess={addToCartByEan} />;
       case 'pengaturan': return <SettingsPage settings={settings} setSettings={setSettings} />;
       default: return <PosPage />;
     }
@@ -288,12 +329,13 @@ function App() {
   return (
     <div>
         <div id="app-container">
+            {isScanning && <ScanPage onScanSuccess={onScanSuccess} onCancel={() => setIsScanning(false)} />}
             <div className="app">
               <header><h1>{settings.storeName}</h1></header>
               <div className="page-content">
                 {renderPage()}
               </div>
-              <BottomNav activePage={activePage} setActivePage={setActivePage} />
+              <BottomNav activePage={activePage} setActivePage={setActivePage} startScan={() => startScan(addToCartByEan)} />
             </div>
         </div>
         <div id="receipt-container">
@@ -308,3 +350,5 @@ function App() {
     </div>
   );
 }
+
+ReactDOM.render(<App />, document.getElementById('root'));
