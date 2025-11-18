@@ -339,8 +339,8 @@ function App() {
     <div>
         <div id="app-container">
             {isScanning && <ScanPage onScanSuccess={onScanSuccess} onCancel={() => setIsScanning(false)} />}
+            <header><h1>{settings.storeName}</h1></header>
             <div className="app">
-              <header><h1>{settings.storeName}</h1></header>
               <div className="page-content">
                 {renderPage()}
               </div>
