@@ -191,6 +191,25 @@ header h1 {
 .product-card h3 { font-size: 0.95rem; margin: 0; font-weight: 600; }
 .product-card p { font-size: 0.9rem; color: var(--primary-color); margin: 0.5rem 0 0; font-weight: 500; }
 
+.product-card.out-of-stock {
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.out-of-stock-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  z-index: 10;
+}
+
 
 .cart {
   background-color: var(--surface-color);
