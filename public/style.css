@@ -518,6 +518,92 @@ header h1 {
 /* --- Struk untuk Cetak --- */
 #receipt-container { display: none; }
 
+/* --- Media Queries untuk Desain Responsif --- */
+
+/* Tata Letak Tablet */
+@media (min-width: 768px) {
+  #app-container {
+    max-width: 100%;
+  }
+
+  .page-content {
+    padding: 2rem;
+  }
+
+  .products {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .product-form {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .history-item, .product-management-list li {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Tata Letak Desktop */
+@media (min-width: 1024px) {
+  body {
+    background-color: #e9ecef;
+  }
+
+  #app-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    border-radius: var(--border-radius);
+    box-shadow: 0 15px 35px rgba(50,50,93,.1),0 5px 15px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+
+  .app {
+    flex-direction: row;
+  }
+
+  .bottom-nav {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 2rem 1rem;
+    box-shadow: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-right: 1px solid var(--border-color);
+  }
+
+  .nav-button {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .nav-button span {
+    display: inline;
+  }
+
+  .main-content {
+    flex-direction: row;
+  }
+
+  .product-list {
+    flex-basis: 65%;
+  }
+
+  .cart {
+    flex-basis: 35%;
+    max-height: calc(100vh - 4rem);
+    position: sticky;
+    top: 2rem;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;
