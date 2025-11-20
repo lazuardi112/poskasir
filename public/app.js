@@ -348,13 +348,24 @@ function App() {
             </div>
         </div>
         <div id="receipt-container">
-            <h2>{settings.storeName}</h2>
-            <table>
-                <thead> <tr> <th>Produk</th> <th>Jumlah</th> <th>Harga</th> <th>Subtotal</th> </tr> </thead>
-                <tbody>{receiptData.cart.map(item => (<tr key={item.id}><td>{item.name}</td><td>{item.quantity}</td><td>Rp {item.price.toLocaleString()}</td><td>Rp {(item.price * item.quantity).toLocaleString()}</td></tr>))}</tbody>
-            </table>
-            <hr /><div className="receipt-total"><h3>Total: Rp {receiptData.total.toLocaleString()}</h3></div>
-            <p className="thank-you-note">{settings.receiptSlogan}</p>
+            <div className="receipt-print">
+                <h2>{settings.storeName}</h2>
+                <p>ID Transaksi: {receiptData.id}</p>
+                <p>{new Date(receiptData.id).toLocaleString()}</p>
+                <div className="items">
+                    {receiptData.cart.map(item => (
+                        <div className="item" key={item.id}>
+                            <span className="name">{item.name} (x{item.quantity})</span>
+                            <span className="price">Rp {(item.price * item.quantity).toLocaleString()}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="total">
+                    <span>Total</span>
+                    <span className="price">Rp {receiptData.total.toLocaleString()}</span>
+                </div>
+                <p className="thank-you-note">{settings.receiptSlogan}</p>
+            </div>
         </div>
     </div>
   );
