@@ -29,7 +29,8 @@ const PosPage = ({ products, cart, addToCart, removeFromCart, clearCart, calcula
         </div>
         <div className="products">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="product-card" onClick={() => addToCart(product)}>
+            <div key={product.id} className={`product-card ${product.stock === 0 ? 'out-of-stock' : ''}`} onClick={() => addToCart(product)}>
+              {product.stock === 0 && <div className="out-of-stock-badge">Stok Habis</div>}
               <h3>{product.name}</h3>
               <p>Rp {product.price.toLocaleString()}</p>
             </div>
@@ -63,6 +64,7 @@ const ProductsPage = ({ products, productForm, isEditing, handleProductFormChang
                 <h3>{isEditing ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
                 <input type="text" name="name" placeholder="Nama Produk" value={productForm.name} onChange={handleProductFormChange} required />
                 <input type="number" name="price" placeholder="Harga" value={productForm.price} onChange={handleProductFormChange} required />
+                <input type="number" name="stock" placeholder="Jumlah Stok" value={productForm.stock} onChange={handleProductFormChange} required />
                 <div className="ean-input-group">
                     <input type="text" name="ean" placeholder="Kode EAN (Barcode)" value={productForm.ean} onChange={handleProductFormChange} />
                     <button type="button" onClick={onScanClick}>Pindai</button>
@@ -76,7 +78,7 @@ const ProductsPage = ({ products, productForm, isEditing, handleProductFormChang
                     <li key={p.id}>
                         <div className="product-info">
                            <span>{p.name} - Rp {p.price.toLocaleString()}</span>
-                           <small>EAN: {p.ean || 'N/A'}</small>
+                           <small>Stok: {p.stock} | EAN: {p.ean || 'N/A'}</small>
                         </div>
                         <div>
                             <button onClick={() => handleEditProduct(p)}>Edit</button>
@@ -242,10 +244,10 @@ function App() {
   const [activePage, setActivePage] = React.useState('pos');
   const [cart, setCart] = React.useState(() => JSON.parse(localStorage.getItem('posCart') || '[]'));
   const [products, setProducts] = React.useState(() => JSON.parse(localStorage.getItem('posProducts') || JSON.stringify([
-    { id: 1, name: 'Kopi Hitam', price: 15000, ean: '1111' }, { id: 2, name: 'Cappuccino', price: 25000, ean: '2222' },
-    { id: 3, name: 'Latte', price: 20000, ean: '3333' }, { id: 4, name: 'Espresso', price: 12000, ean: '4444' },
+    { id: 1, name: 'Kopi Hitam', price: 15000, ean: '1111', stock: 100 }, { id: 2, name: 'Cappuccino', price: 25000, ean: '2222', stock: 50 },
+    { id: 3, name: 'Latte', price: 20000, ean: '3333', stock: 75 }, { id: 4, name: 'Espresso', price: 12000, ean: '4444', stock: 80 },
   ])));
-  const [productForm, setProductForm] = React.useState({ id: null, name: '', price: '', ean: '' });
+  const [productForm, setProductForm] = React.useState({ id: null, name: '', price: '', stock: '', ean: '' });
   const [isEditing, setIsEditing] = React.useState(false);
   const [settings, setSettings] = React.useState(() => JSON.parse(localStorage.getItem('posSettings') || JSON.stringify({
       storeName: 'Modern POS', receiptSlogan: 'Terima kasih telah berkunjung!'
@@ -269,9 +271,19 @@ function App() {
     setIsScanning(false);
   };
   const addToCart = (product) => {
+    if (product.stock === 0) {
+        alert('Stok produk ini telah habis.');
+        return;
+    }
     setCart(prev => {
       const exist = prev.find(item => item.id === product.id);
-      if (exist) return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      if (exist) {
+          if (exist.quantity >= product.stock) {
+              alert(`Stok tidak mencukupi. Sisa stok: ${product.stock}`);
+              return prev;
+          }
+          return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
       return [...prev, { ...product, quantity: 1 }];
     });
   };
@@ -287,6 +299,17 @@ function App() {
 
   const completeTransaction = () => {
       const newTransaction = { id: Date.now(), cart: [...cart], total: calculateTotal() };
+
+      // Kurangi stok produk
+      let newProducts = [...products];
+      cart.forEach(cartItem => {
+          const productIndex = newProducts.findIndex(p => p.id === cartItem.id);
+          if (productIndex !== -1) {
+              newProducts[productIndex].stock -= cartItem.quantity;
+          }
+      });
+      setProducts(newProducts);
+
       setHistory([newTransaction, ...history]);
       setCurrentTransaction(newTransaction);
       setCart([]);
@@ -298,18 +321,18 @@ function App() {
   const handleProductFormChange = (e) => setProductForm({ ...productForm, [e.target.name]: e.target.value });
   const handleProductSubmit = (e) => {
     e.preventDefault();
-    const { id, name, price, ean } = productForm;
+    const { id, name, price, stock, ean } = productForm;
     if (isEditing) {
-      setProducts(products.map(p => p.id === id ? { ...p, name, price: Number(price), ean } : p));
+      setProducts(products.map(p => p.id === id ? { ...p, name, price: Number(price), stock: Number(stock), ean } : p));
     } else {
-      setProducts([...products, { id: Date.now(), name, price: Number(price), ean }]);
+      setProducts([...products, { id: Date.now(), name, price: Number(price), stock: Number(stock), ean }]);
     }
     setIsEditing(false);
-    setProductForm({ id: null, name: '', price: '', ean: '' });
+    setProductForm({ id: null, name: '', price: '', stock: '', ean: '' });
   };
   const handleEditProduct = (product) => { setProductForm(product); setIsEditing(true); setActivePage('produk'); };
   const handleDeleteProduct = (id) => setProducts(products.filter(p => p.id !== id));
-  const cancelEdit = () => { setIsEditing(false); setProductForm({ id: null, name: '', price: '', ean: '' }); };
+  const cancelEdit = () => { setIsEditing(false); setProductForm({ id: null, name: '', price: '', stock: '', ean: '' }); };
   const startScan = () => {
       const callback = activePage === 'produk' ? handleScanForForm : addToCartByEan;
       setScanCallback(() => callback);
